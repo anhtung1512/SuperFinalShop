@@ -1,0 +1,66 @@
+﻿@page "/product/{ProductId:int}"
+@using System.Net.Http.Json
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+<style>
+    .container {
+        max-width: 800px; /* Giới hạn chiều rộng tối đa của container */
+        margin: 0 auto; /* Căn giữa container */
+    }
+
+    .card {
+        border-radius: 10px; /* Bo tròn góc của thẻ card */
+    }
+
+    .card-img-top {
+        object-fit: cover; /* Cắt ảnh để phù hợp với kích thước của card */
+        height: 400px; /* Đặt chiều cao cố định cho hình ảnh */
+    }
+</style>
+
+<section class="py-5">
+    <div class="container">
+        @if (product == null)
+        {
+            <p>Loading...</p>
+        }
+        else
+        {
+            <div class="card mb-3">
+                <img class="card-img-top" src="/picture/@product.ImageUrl" alt="@product.Name" />
+                <div class="card-body">
+                    <h5 class="card-title">@product.Name</h5>
+                    <p class="card-text">@product.Description</p>
+                    <p class="card-text"><strong>Price:</strong> $@product.Price</p>
+                    <button class="btn btn-primary" @onclick="AddToCart">Quay lại</button>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public int ProductId { get; set; }
+
+    private Product? product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch product details from the API
+        product = await HttpClient.GetFromJsonAsync<Product>($"api/products/{ProductId}");
+    }
+
+    private async Task AddToCart()
+    {
+        if (product != null)
+        {
+            // Add product to the cart (you would need to implement this logic)
+            // Example: await HttpClient.PostAsJsonAsync("api/cart/add", product);
+
+            // Navigate back to the home page or another page
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}

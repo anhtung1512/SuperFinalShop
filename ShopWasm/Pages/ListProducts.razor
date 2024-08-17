@@ -1,0 +1,140 @@
+﻿@page "/ListProducts"
+@using ShopApi.Models
+@using ShopApi.Services
+@inject IProductService ProductService
+@inject NavigationManager Navigation
+
+<style>
+
+    .container {
+        padding: 0 20px; /* Lề hai bên của toàn bộ container */
+    }
+
+    .table-container {
+        overflow-x: auto; /* Đảm bảo bảng không bị cắt khi có nhiều cột */
+    }
+
+    .table {
+        width: 100%; /* Đảm bảo bảng chiếm toàn bộ chiều rộng của container */
+        border-collapse: collapse; /* Hợp nhất đường viền giữa các ô */
+    }
+
+        .table th, .table td {
+            padding: 10px; /* Khoảng cách bên trong các ô */
+            text-align: left; /* Căn lề văn bản bên trái */
+        }
+
+        .table th {
+            background-color: #f4f4f4; /* Màu nền cho tiêu đề cột */
+        }
+
+    .alert {
+        margin: 10px 0; /* Khoảng cách trên và dưới cho thông báo */
+    }
+
+    button {
+        margin-right: 5px; /* Khoảng cách giữa các nút hành động */
+    }
+</style>
+
+<div class="container">
+    <h3>Danh Sách Sản Phẩm</h3>
+
+    @if (products == null)
+    {
+        <p>Đang tải...</p>
+    }
+    else
+    {
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tên</th>
+                        <th>Mô Tả</th>
+                        <th>Giá</th>
+@*                         <th>Hình Ảnh</th>
+ *@                        <th>Danh Mục</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in products)
+                    {
+                        <tr>
+                            <td>@product.Name</td>
+                            <td>@product.Description</td>
+                            <td>@product.Price</td>
+@*                             <td><img src="@product.ImageUrl" alt="@product.Name" width="50" /></td>
+ *@                            <td>@product.Category</td>
+                            <td>
+                                <button type="button" class="btn btn-info" @onclick="() => EditProduct(product.Id)">Sửa</button>
+                                <button type="button" class="btn btn-danger" @onclick="() => DeleteProduct(product.Id)">Xóa</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <button type="button" class="btn btn-primary" @onclick="CreateProduct">Tạo Sản Phẩm Mới</button>
+    }
+
+    @if (deleteSuccess)
+    {
+        <div class="alert alert-success mt-3">
+            Sản phẩm đã được xóa thành công!
+        </div>
+    }
+    @if (deleteError)
+    {
+        <div class="alert alert-danger mt-3">
+            Đã xảy ra lỗi khi xóa sản phẩm. Vui lòng thử lại.
+        </div>
+    }
+</div>
+
+
+@code {
+    private IEnumerable<Product>? products;
+    private bool deleteSuccess = false;
+    private bool deleteError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await ProductService.GetProducts();
+    }
+
+    private void CreateProduct()
+    {
+        Navigation.NavigateTo("/AddProduct");
+    }
+
+    private void EditProduct(int id)
+    {
+        Navigation.NavigateTo($"/AddProduct/{id}");
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        try
+        {
+            await ProductService.DeleteProduct(id);
+            products = await ProductService.GetProducts(); // Refresh the list
+            deleteSuccess = true;
+            deleteError = false;
+            StateHasChanged(); // Cập nhật giao diện để hiển thị thông báo
+            await Task.Delay(1000); // Hiển thị thông báo trong 1 giây
+            deleteSuccess = false;
+            StateHasChanged(); // Cập nhật giao diện để ẩn thông báo
+        }
+        catch (Exception)
+        {
+            deleteSuccess = false;
+            deleteError = true;
+            StateHasChanged(); // Cập nhật giao diện để hiển thị thông báo lỗi
+            await Task.Delay(1000); // Hiển thị thông báo lỗi trong 1 giây
+            deleteError = false;
+            StateHasChanged(); // Cập nhật giao diện để ẩn thông báo
+        }
+    }
+}

@@ -1,0 +1,163 @@
+﻿@page "/AddProduct/{id:int?}"
+@using ShopApi.Models
+@using ShopApi.Services
+@inject IProductService ProductService
+@inject NavigationManager Navigation
+
+<div class="container">
+    <h3 class="text-center mb-4">@(isNew ? "Tạo Sản Phẩm" : "Chỉnh Sửa Sản Phẩm")</h3>
+
+    <EditForm Model="product" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="row gy-4">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Tên</label>
+                    <InputText id="name" class="form-control" @bind-Value="product.Name" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Mô Tả</label>
+                    <InputTextArea id="description" class="form-control" @bind-Value="product.Description" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="price" class="form-label">Giá</label>
+                    <InputNumber id="price" class="form-control" @bind-Value="product.Price" />
+                </div>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Số Lượng</label>
+                    <InputNumber id="quantity" class="form-control" @bind-Value="product.Quantity" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="imageUrl" class="form-label">URL Hình Ảnh</label>
+                    <InputText id="imageUrl" class="form-control" @bind-Value="product.ImageUrl" />
+                </div>
+                <div class="mb-3">
+                    <label for="category" class="form-label">Danh Mục</label>
+                    <InputText id="category" class="form-control" @bind-Value="product.Category" />
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Lưu</button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel">Hủy</button>
+        </div>
+
+        @if (saveSuccess)
+        {
+            <div class="alert alert-success mt-3">
+                Sản phẩm đã được lưu thành công!
+            </div>
+        }
+        @if (saveError)
+        {
+            <div class="alert alert-danger mt-3">
+                Đã xảy ra lỗi khi lưu sản phẩm. Vui lòng thử lại.
+            </div>
+        }
+    </EditForm>
+</div>
+
+<style>
+    .container {
+        max-width: 800px; /* Giới hạn chiều rộng của container */
+        margin: 0 auto; /* Căn giữa container */
+    }
+
+    .text-center {
+        text-align: center; /* Căn giữa tiêu đề */
+    }
+
+    .form-label {
+        font-weight: 500; /* Đậm hơn cho nhãn */
+        color: #333; /* Màu chữ nhãn */
+    }
+
+    .btn-primary {
+        background-color: #007bff; /* Màu nền nút chính */
+        border-color: #007bff; /* Đường viền nút chính */
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3; /* Màu nền khi di chuột qua */
+            border-color: #004085; /* Đường viền khi di chuột qua */
+        }
+
+    .btn-secondary {
+        background-color: #6c757d; /* Màu nền nút phụ */
+        border-color: #6c757d; /* Đường viền nút phụ */
+    }
+
+        .btn-secondary:hover {
+            background-color: #5a6268; /* Màu nền khi di chuột qua */
+            border-color: #4e555b; /* Đường viền khi di chuột qua */
+        }
+
+    .alert {
+        border-radius: 0.25rem; /* Bo tròn góc thông báo */
+    }
+
+    .card {
+        border-radius: 0.5rem; /* Bo tròn góc cho card */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Thêm bóng cho card */
+    }
+</style>
+
+
+
+@code {
+    [Parameter] public int? id { get; set; }
+    private Product product = new();
+    private bool isNew = true;
+    private bool saveSuccess = false;
+    private bool saveError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (id.HasValue)
+        {
+            product = await ProductService.GetProduct(id.Value);
+            isNew = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (isNew)
+            {
+                await ProductService.AddProduct(product);
+            }
+            else
+            {
+                await ProductService.UpdateProduct(product);
+            }
+            saveSuccess = true;
+            saveError = false;
+            StateHasChanged(); // Cập nhật giao diện để hiển thị thông báo
+            await Task.Delay(2000); // Hiển thị thông báo trong 1 giây
+            saveSuccess = false; // Ẩn thông báo thành công
+            Navigation.NavigateTo("/ListProducts"); // Điều hướng đến danh sách sản phẩm
+        }
+        catch (Exception ex)
+        {
+            saveError = true;
+            saveSuccess = false;
+            // Ghi log hoặc hiển thị thông báo chi tiết hơn
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/ListProducts");
+    }
+}
+
